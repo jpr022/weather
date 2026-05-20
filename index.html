@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>weather</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #1a1b1e;
+      color: #e6edf3;
+      font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 20px 28px 14px;
+      border-bottom: 1px solid #21262d;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header h1 {
+      font-size: 13px;
+      font-weight: normal;
+      letter-spacing: 0.12em;
+      color: #8b949e;
+      text-transform: lowercase;
+    }
+
+    #datestamp {
+      font-size: 12px;
+      color: #484f58;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .location {
+      padding: 24px 28px 32px;
+      border-right: 1px solid #21262d;
+    }
+
+    .location:last-child {
+      border-right: none;
+    }
+
+    .location-name {
+      font-size: 14px;
+      font-weight: bold;
+      letter-spacing: 0.14em;
+      color: #58a6ff;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .ascii-art {
+      color: #8b949e;
+      font-size: 12px;
+      line-height: 1.4;
+      margin-bottom: 16px;
+      min-height: 60px;
+      white-space: pre;
+    }
+
+    .current-temp {
+      font-size: 32px;
+      font-weight: normal;
+      color: #e6edf3;
+      letter-spacing: -0.02em;
+      margin-bottom: 4px;
+    }
+
+    .current-desc {
+      color: #8b949e;
+      margin-bottom: 4px;
+      font-size: 12px;
+    }
+
+    .current-hilo {
+      color: #8b949e;
+      font-size: 12px;
+      margin-bottom: 2px;
+    }
+
+    .current-meta {
+      color: #484f58;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    .current-quip {
+      color: #3fb950;
+      font-size: 11px;
+      font-style: italic;
+      margin-bottom: 20px;
+    }
+
+    .forecast-label {
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #484f58;
+      margin-bottom: 10px;
+    }
+
+    .forecast-row {
+      display: flex;
+      align-items: baseline;
+      gap: 0;
+      margin-bottom: 5px;
+      font-size: 12px;
+    }
+
+    .forecast-day {
+      color: #e8853a;
+      width: 32px;
+      flex-shrink: 0;
+    }
+
+    .forecast-hi {
+      color: #e6edf3;
+      width: 36px;
+      flex-shrink: 0;
+    }
+
+    .forecast-lo {
+      color: #484f58;
+      width: 36px;
+      flex-shrink: 0;
+    }
+
+    .forecast-desc {
+      color: #6e7681;
+      font-size: 11px;
+    }
+
+    .loading {
+      color: #484f58;
+      font-size: 12px;
+      padding-top: 8px;
+    }
+
+    .error {
+      color: #f85149;
+      font-size: 12px;
+    }
+
+    footer {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 28px;
+      border-top: 1px solid #21262d;
+      color: #484f58;
+      font-size: 11px;
+    }
+
+    @media (max-width: 767px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .location {
+        border-right: none;
+        border-bottom: 1px solid #21262d;
+        padding: 24px 20px 28px;
+      }
+
+      .location:last-child {
+        border-bottom: none;
+      }
+
+      header {
+        padding: 16px 20px 12px;
+      }
+
+      footer {
+        padding: 14px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>weather</h1>
+    <span id="datestamp"></span>
+  </header>
+
+  <main class="grid">
+    <section class="location" id="loc-westford">
+      <div class="location-name">Westford, MA</div>
+      <div class="loading">loading...</div>
+    </section>
+    <section class="location" id="loc-denmark">
+      <div class="location-name">Denmark, ME</div>
+      <div class="loading">loading...</div>
+    </section>
+    <section class="location" id="loc-orchardpark">
+      <div class="location-name">Orchard Park, NY</div>
+      <div class="loading">loading...</div>
+    </section>
+  </main>
+
+  <footer>
+    data: open-meteo.com &nbsp;·&nbsp; updates on page load
+  </footer>
+
+  <script>
+    const LOCATIONS = [
+      { id: 'loc-westford',    name: 'Home',     lat: 42.5793, lon: -71.4370, tz: 'America/New_York' },
+      { id: 'loc-denmark',     name: 'Maine',    lat: 44.0576, lon: -70.7717, tz: 'America/New_York' },
+      { id: 'loc-orchardpark', name: 'Go Bills', lat: 42.7676, lon: -78.7445, tz: 'America/New_York' },
+    ];
+
+    const WMO = {
+      0:  { label: 'clear',          art: `    \\   /
+     .-.
+  ‒ (   ) ‒
+     \`-'
+    /   \\` },
+      1:  { label: 'mostly clear',   art: `    \\   /
+     .-.
+  ‒ (   ) ‒
+     \`-'
+    /   \\` },
+      2:  { label: 'partly cloudy',  art: `   .  .
+ .(   ).
+(___(__)` },
+      3:  { label: 'overcast',       art: `   .---.
+ .(     ).
+(___(_____)` },
+      45: { label: 'fog',            art: `  _ - _ - _
+ _ - _ - _
+  - _ - _` },
+      48: { label: 'freezing fog',   art: `  _ - _ - _
+ _ - _ - _
+  * - * - *` },
+      51: { label: 'light drizzle',  art: `   .---.
+ .(     ).
+(___(_____)
+  ' ' ' '` },
+      53: { label: 'drizzle',        art: `   .---.
+ .(     ).
+(___(_____)
+ ' ' ' ' '` },
+      55: { label: 'heavy drizzle',  art: `   .---.
+ .(     ).
+(___(_____)
+'' '' '' ''` },
+      61: { label: 'light rain',     art: `   .---.
+ .(     ).
+(___(_____)
+  / / / /` },
+      63: { label: 'rain',           art: `   .---.
+ .(     ).
+(___(_____)
+ / / / / /` },
+      65: { label: 'heavy rain',     art: `   .---.
+ .(     ).
+(___(_____)
+// // // //` },
+      71: { label: 'light snow',     art: `   .---.
+ .(     ).
+(___(_____)
+  *  *  *` },
+      73: { label: 'snow',           art: `   .---.
+ .(     ).
+(___(_____)
+ * * * * *` },
+      75: { label: 'heavy snow',     art: `   .---.
+ .(     ).
+(___(_____)
+** ** ** **` },
+      77: { label: 'snow grains',    art: `   .---.
+ .(     ).
+(___(_____)
+ · · · · ·` },
+      80: { label: 'light showers',  art: `   .  .
+ .(   ).
+(___(__)
+  / / /` },
+      81: { label: 'showers',        art: `   .  .
+ .(   ).
+(___(__)
+ / / / /` },
+      82: { label: 'heavy showers',  art: `   .  .
+ .(   ).
+(___(__)
+// // // //` },
+      85: { label: 'snow showers',   art: `   .  .
+ .(   ).
+(___(__)
+ * * * *` },
+      86: { label: 'heavy snow showers', art: `   .  .
+ .(   ).
+(___(__)
+** ** ** **` },
+      95: { label: 'thunderstorm',   art: `   .---.
+ .(     ).
+(___(_____)
+  /_/
+ /` },
+      96: { label: 'thunderstorm',   art: `   .---.
+ .(     ).
+(___(_____)
+  /_/ *
+ /` },
+      99: { label: 'thunderstorm',   art: `   .---.
+ .(     ).
+(___(_____)
+  /_/ **
+ /` },
+    };
+
+    function wmo(code) {
+      if (WMO[code]) return WMO[code];
+      // round down to nearest group for codes not explicitly listed
+      const keys = Object.keys(WMO).map(Number).sort((a, b) => a - b);
+      for (let i = keys.length - 1; i >= 0; i--) {
+        if (keys[i] <= code) return WMO[keys[i]];
+      }
+      return { label: 'unknown', art: '  ?' };
+    }
+
+    const DAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+
+    function dayName(dateStr) {
+      const d = new Date(dateStr + 'T12:00:00');
+      return DAYS[d.getDay()];
+    }
+
+    async function fetchWeather(loc) {
+      const url = `https://api.open-meteo.com/v1/forecast`
+        + `?latitude=${loc.lat}&longitude=${loc.lon}`
+        + `&current=temperature_2m,weathercode,relative_humidity_2m,windspeed_10m`
+        + `&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_probability_max`
+        + `&temperature_unit=fahrenheit&wind_speed_unit=mph`
+        + `&timezone=${encodeURIComponent(loc.tz)}&forecast_days=6`;
+
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    }
+
+    function snark(code, precipPct, hi, lo) {
+      const rain = precipPct >= 70;
+      const mightRain = precipPct >= 40 && precipPct < 70;
+      const snow = code >= 71 && code <= 77;
+      const storm = code >= 95;
+      const spread = hi - lo;
+
+      if (storm) return `bring a lightning rod, hero.`;
+      if (snow && hi < 25) return `absolutely not. stay inside.`;
+      if (snow) return `yes, it's snowing. no, you can't skip work.`;
+      if (rain) return `you will get wet. pack accordingly.`;
+      if (mightRain) return `${precipPct}% chance of rain. your call.`;
+      if (code >= 45 && code <= 48) return `visibility: vibes only.`;
+      if (code <= 1 && hi >= 80) return `gorgeous. almost suspicious.`;
+      if (code <= 1 && hi < 32) return `clear skies, frozen face.`;
+      if (code <= 1) return `no excuses to stay home today.`;
+      if (spread >= 25) return `dress in layers or suffer the consequences.`;
+      if (hi < 20) return `it's aggressively cold out there.`;
+      if (hi >= 90) return `it's hot. drink water. complain online.`;
+      return `unremarkable. classic.`;
+    }
+
+    function render(loc, data) {
+      const el = document.getElementById(loc.id);
+      const c = data.current;
+      const d = data.daily;
+
+      const weatherInfo = wmo(c.weathercode);
+      const temp = Math.round(c.temperature_2m);
+      const humidity = c.relative_humidity_2m;
+      const wind = Math.round(c.windspeed_10m);
+      const todayHi = Math.round(d.temperature_2m_max[0]);
+      const todayLo = Math.round(d.temperature_2m_min[0]);
+      const todayPrecip = d.precipitation_probability_max[0] ?? 0;
+      const quip = snark(c.weathercode, todayPrecip, todayHi, todayLo);
+
+      // forecast rows: skip index 0 (today), take next 5
+      let forecastRows = '';
+      for (let i = 1; i <= 5; i++) {
+        const day = dayName(d.time[i]);
+        const hi = Math.round(d.temperature_2m_max[i]);
+        const lo = Math.round(d.temperature_2m_min[i]);
+        const desc = wmo(d.weathercode[i]).label;
+        forecastRows += `
+          <div class="forecast-row">
+            <span class="forecast-day">${day}</span>
+            <span class="forecast-hi">${hi}°</span>
+            <span class="forecast-lo">${lo}°</span>
+            <span class="forecast-desc">${desc}</span>
+          </div>`;
+      }
+
+      el.innerHTML = `
+        <div class="location-name">${loc.name}</div>
+        <pre class="ascii-art">${weatherInfo.art}</pre>
+        <div class="current-temp">${temp}°F</div>
+        <div class="current-desc">${weatherInfo.label}</div>
+        <div class="current-hilo">↑ ${todayHi}°&nbsp;&nbsp;↓ ${todayLo}°</div>
+        <div class="current-meta">humidity ${humidity}% &nbsp; wind ${wind} mph</div>
+        <div class="current-quip">${quip}</div>
+        <div class="forecast-label">next 5 days</div>
+        ${forecastRows}
+      `;
+    }
+
+    function renderError(loc, msg) {
+      const el = document.getElementById(loc.id);
+      el.innerHTML = `
+        <div class="location-name">${loc.name}</div>
+        <div class="error">failed to load: ${msg}</div>
+      `;
+    }
+
+    function setDate() {
+      const now = new Date();
+      const opts = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+      document.getElementById('datestamp').textContent =
+        now.toLocaleDateString('en-US', opts).toLowerCase();
+    }
+
+    async function init() {
+      setDate();
+      await Promise.all(LOCATIONS.map(async loc => {
+        try {
+          const data = await fetchWeather(loc);
+          render(loc, data);
+        } catch (e) {
+          renderError(loc, e.message);
+        }
+      }));
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
