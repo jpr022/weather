@@ -145,6 +145,17 @@
       font-size: 11px;
     }
 
+    #affirmation {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 12px 28px;
+      border-bottom: 1px solid #21262d;
+      color: #8b949e;
+      font-size: 11px;
+      font-style: italic;
+      letter-spacing: 0.05em;
+    }
+
     .loading {
       color: #484f58;
       font-size: 12px;
@@ -196,6 +207,8 @@
     <h1>weather</h1>
     <span id="datestamp"></span>
   </header>
+
+  <div id="affirmation"></div>
 
   <main class="grid">
     <section class="location" id="loc-westford">
@@ -426,6 +439,46 @@
       `;
     }
 
+    const AFFIRMATIONS = [
+      "You can't control what happens today. You can control how you respond.",
+      "Do what's right. That's enough.",
+      "This too will pass — good and bad alike.",
+      "Worry is borrowed trouble. Act on what's yours to act on.",
+      "You've handled hard days before. Today is no different.",
+      "Want less. Need less. Do more.",
+      "The obstacle is the work.",
+      "Other people's opinions are not your problem.",
+      "Make good use of today. That's all that's ever asked.",
+      "Your reputation is built by others. Your character is built by you.",
+      "Discomfort won't kill you. Avoiding it might.",
+      "Be useful. Be honest. That's the whole job.",
+      "What would a calm, clear-headed version of you do right now?",
+      "You don't need things to go well. You need to go well through things.",
+      "Today will end. Make sure you did something worthy of it.",
+      "The thing you're avoiding is usually the thing you should do first.",
+      "A good day starts with a clear mind, not a clear calendar.",
+      "Complaining changes nothing. Action might.",
+      "You have enough. Do enough. Be enough.",
+      "What's in your control today? Start there.",
+      "Progress is made by people who kept going anyway.",
+      "Patience is not weakness. It's the long game.",
+      "Say less. Mean more.",
+      "You are not your circumstances. You are your response to them.",
+      "Expect difficulty. Prepare well. Complain never.",
+      "No one owes you a good day. Go make one.",
+      "The present moment is where your life actually happens.",
+      "Small, consistent actions beat dramatic ones every time.",
+      "Ask not what you deserve. Ask what you've earned.",
+      "A clear conscience needs no reminders.",
+      "Endure what you must. Change what you can. Know the difference.",
+    ];
+
+    function setAffirmation() {
+      const day = new Date().getDate();
+      const text = AFFIRMATIONS[(day - 1) % AFFIRMATIONS.length];
+      document.getElementById('affirmation').textContent = text;
+    }
+
     function setDate() {
       const now = new Date();
       const opts = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
@@ -435,6 +488,7 @@
 
     async function init() {
       setDate();
+      setAffirmation();
       await Promise.all(LOCATIONS.map(async loc => {
         try {
           const data = await fetchWeather(loc);
