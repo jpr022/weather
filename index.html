@@ -167,6 +167,10 @@
     }
 
     @media (max-width: 767px) {
+      body {
+        font-size: 17px;
+      }
+
       .grid {
         grid-template-columns: 1fr;
       }
@@ -174,23 +178,66 @@
       .location {
         border-right: none;
         border-bottom: 1px solid #21262d;
-        padding: 24px 20px 28px;
+        padding: 24px 16px 28px;
       }
 
       .location:last-child {
         border-bottom: none;
       }
 
+      .location-name {
+        font-size: 16px;
+      }
+
+      .ascii-art {
+        font-size: 14px;
+      }
+
+      .current-temp {
+        font-size: 48px;
+      }
+
+      .current-desc,
+      .current-hilo,
+      .current-meta {
+        font-size: 14px;
+      }
+
+      .current-quip {
+        font-size: 13px;
+      }
+
+      .forecast-label {
+        font-size: 12px;
+      }
+
+      .forecast-row {
+        font-size: 15px;
+      }
+
+      .forecast-day {
+        width: 40px;
+      }
+
+      .forecast-hi,
+      .forecast-lo {
+        width: 44px;
+      }
+
+      .forecast-desc {
+        font-size: 14px;
+      }
+
       header {
-        padding: 8px 20px;
+        padding: 8px 16px;
       }
 
       #affirmation {
-        padding: 16px 20px;
+        padding: 16px 16px;
       }
 
       footer {
-        padding: 14px 20px;
+        padding: 14px 16px;
       }
     }
   </style>
